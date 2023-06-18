@@ -1,0 +1,750 @@
+---
+title: "Practice"
+author: "Rachkov Denis"
+date: "2022-06-18"
+output: html_document
+---
+
+# 1. Реализовать аппроксимацию распределений данных с помощью
+#    ядерных оценок.
+
+# Загрузим данные о классификации телефонов
+```{r}
+table <- read.table(file = "test.csv", header = TRUE, sep = ",")
+```
+# и выведем первые 5 строк таблицы
+```{r}
+head(table, n = 5)
+```
+# Построим гистограмму для  емкости батареи
+```{r}
+hist(table$battery_power, 
+	breaks = 25,
+	freq = FALSE,
+	col = "lightblue",
+	xlab = "Емкость батареи",
+	ylab = "Плотность распределения",
+	main = "Гистограмма и KDE")
+lines(density(table$battery_power), col = "red", lwd = 2)
+```
+# и апроксимируем распредление данных с помощью ядерной оценки плотности
+
+# Проделаем то же самое с данными о емкости батареи для телефонов,
+# имеющих / не имеющих bluetooth, изобразив их рядом
+```{r}
+par(mfrow = c(1, 2))
+
+hist(table$battery_power[table$blue == 0], 
+	breaks = 25,
+	freq = FALSE,
+	col = "lightblue",
+	xlab = "Емкость батареи",
+	ylab = "Плотность распределения",
+	main = "Гистограмма и KDE для емкости батареи для blue = 0")
+lines(density(table$battery_power[table$blue == 0]), col = "red", lwd = 2)
+
+hist(table$battery_power[table$blue == 1], 
+	breaks = 25,
+	freq = FALSE,
+	col = "lightblue",
+	xlab = "Емкость батареи",
+	ylab = "Плотность распределения",
+	main = "Гистограмма и KDE для емкости батареи для blue = 1")
+lines(density(table$battery_power[table$blue == 1]), col = "red", lwd = 2)
+```
+
+
+
+# __________________________________________________________________________________
+
+# 2. Реализовать анализ данных с помощью cdplot, dotchart, boxplot и stripchart
+
+# Cкачаем пакет HSAUR2 в котором есть данные plasma\
+```{r}
+install.packages("HSAUR2")
+library(HSAUR2)
+
+data(plasma)
+```
+# посмотрим на данные и их основные характеристики
+```{r}
+head(plasma)
+summary(plasma)
+```
+# Делим облатсь графического устройства на две части
+```{r}
+layout(matrix(1:2, ncol = 2))
+```
+# и строим графики
+```{r}
+cdplot(ESR ~ fibrinogen, col = c("yellow", "lightblue"), data = plasma)
+cdplot(ESR ~ globulin, col = c("yellow", "lightblue"), data = plasma)
+```
+
+# Теперь попробуем проанализировать данные с помощью
+# диаграмм рассеяния и размахов, совмещенных на одном графике
+# Для этого скачаем данные о инсектицидных средствах
+```{r}
+data(InsectSprays)
+head(InsectSprays)
+
+layout(1)
+```
+# И изобразим графики диаграмм размаха
+```{r}
+boxplot(count ~ spray, 
+        outline = FALSE, # отключаем изображение точек-выбросов
+	    col = "skyblue",
+        xlab = "Инсектициды",
+        ylab = "Количество выживших насекомых",
+        main = "Эффективность инсектицидов",
+        data = InsectSprays)
+```
+# и рассеяния
+```{r}
+stripchart(count ~ spray, 
+	    method = "stack", 
+	    data = InsectSprays,
+        add = TRUE, # позволяет добавить точки на уже существующий график
+        pch = 1, 
+	    col = "red",
+        vertical = TRUE)
+
+```
+# Теперь исследуем зависимость расхода топлива 
+# разных моделей автомобилей от количества цилиндров в двигателе
+
+# Скачаем данные
+```{r}
+data(mtcars)
+mtcars
+```
+# отсортируем их по возрастанию mpg
+```{r}
+mtcarsnew <- mtcars[order(mtcars$mpg), ] 
+mtcarsnew
+```
+# группируем значения mpg по количеству цилиндров
+```{r}
+mtcarsnew$cyl <- factor(mtcarsnew$cyl) 
+```
+# добавляем к данным столбик цвета для одинакового количества цилиндров
+```{r}
+mtcarsnew$color[mtcarsnew$cyl == 4] <- "blue"
+mtcarsnew$color[mtcarsnew$cyl == 6] <- "red"
+mtcarsnew$color[mtcarsnew$cyl == 8] <- "green"
+```
+# и наконец визуализируем точечную диаграмму Кливленда
+```{r}
+dotchart(mtcarsnew$mpg, 
+        labels = row.names(mtcarsnew),
+        groups = mtcarsnew$cyl,
+        gcolor = "blue",
+        pch = 16,
+        color = mtcarsnew$color,
+        main = "Экономичность двигателя у автомобилей",
+        xlab = "Миль на галлон")
+```
+
+# __________________________________________________________________________________
+
+# 3. Проверить, являются ли наблюдения выбросами с точки зрения
+# формальных статистических критериев Граббса и Q-теста Диксона.
+# Визуализировать результаты.
+
+
+# Загрузим данные о ценах на недвижимость в Бостоне
+```{r}
+b <- read.csv("boston.csv")
+head(b)
+```
+# Визуализируем данные криминальной состовляющей на душу населения
+```{r}
+stripchart(CRIM ~ X, 
+	     pch = 1,
+	     col = "red",
+	     data = b,
+	     vertical = TRUE)
+```
+# Проверим, является ли максимальное значение выбросом
+```{r}
+install.packages("outliers")
+library(outliers)
+grubbs.test(b$CRIM)
+```
+# Теперь проверим то же самое с помощью Q теста Диксона
+
+# Для этого отсортируем данные по колонке CRIM
+```{r}
+b <- b[order(b$CRIM, decreasing = TRUE), ]
+```
+# И проведем сам тест
+```{r}
+dixon.test(b$CRIM[1:30], 
+           type = 0, 
+	     opposite = FALSE, 
+	     two.sided = TRUE)
+```
+
+
+# __________________________________________________________________________________
+
+# 4. Воспользоваться инструментами для заполнения пропусков в
+# данных. Пропуски внести вручную и сравнить результаты заполнения с
+# истинными значениями.
+
+
+# Загрузим данные о классификации телефонов
+```{r}
+data <- read.csv("test.csv")
+```
+# оставим только данные о числе ядер процессора
+# и о скорости работы процессора
+```{r}
+data <- data[c('n_cores', 'clock_speed')]
+head(data)
+```
+# Найдем коэффициент корреляции между этими величинами
+```{r}
+cor.test(data$clock_speed, data$n_cores)
+```
+# Искусственно создадим пропуски
+```{r}
+missing_indexes1 = sample(1:length(data$n_cores), 200)
+missing_indexes2 = sample(1:length(data$clock_speed), 333)
+data$n_cores[missing_indexes1 ] <- NA
+data$clock_speed[missing_indexes2 ] <- NA
+
+head(data, n = 15)
+```
+# И заполним их медианным значением
+```{r}
+data$n_cores[missing_indexes1] <- median(data$n_cores, na.rm = T)
+data$clock_speed[missing_indexes2] <- median(data$clock_speed, na.rm = T)
+
+head(data, n = 15)
+```
+# теперь проверим получившийся коэффициент корреляции
+```{r}
+cor.test(data$clock_speed, data$n_cores)
+```
+
+
+# __________________________________________________________________________________
+
+# 5. Сгенерировать данные из нормального распределения с различными
+# параметрами и провести анализ с помощью графиков эмпирических функций
+# распределений, квантилей, метода огибающих, а также стандартных процедур
+# проверки гипотез о нормальности (критерии Колмогорова-Смирнова, ШапироУилка, Андерсона-Дарлинга, Крамера фон Мизеса, Колмогорова-Смирнова в
+# модификации Лиллиефорса и Шапиро-Франсия). Рассмотреть выборки малого
+# (не более 50-100 элементов) и умеренного (1000-5000 наблюдений) объемов.
+
+
+# скачаем библиотеки
+```{r}
+install.packages("nortes")
+library(MASS)
+library(ggplot2)
+library(boot)
+library(nortest)
+```
+# и генерируем данные
+```{r}
+set.seed(42)
+
+n = 100
+data_100 <- matrix( c(sort(rnorm(n, mean = 0, sd = 1)),
+                      sort(rnorm(n, mean = 5, sd = 10))),
+               		nrow = 2, 
+					ncol = n, 
+					byrow = TRUE)
+
+data_mle_100_1 <- fitdistr(data_100[1, ], densfun = "normal")
+data_mle_100_2 <- fitdistr(data_100[2, ], densfun = "normal")
+
+n = 1000
+data_1000 <- matrix( c(sort(rnorm(n, mean = 0, sd = 1)),
+                       sort(rnorm(n, mean = 5, sd = 10))),
+                     nrow = 2,
+					 ncol = n,
+					 byrow = TRUE)
+
+data_mle_1000_1 <- fitdistr(data_1000[1, ], densfun = "normal")
+data_mle_1000_2 <- fitdistr(data_1000[2, ], densfun = "normal")
+```
+# выведем что получилось
+```{r}
+layout(matrix(1:2, ncol = 2))
+hist(data_100[1, ])
+hist(data_100[2, ])
+hist(data_1000[1, ])
+hist(data_1000[2, ])
+```
+
+# построим QQ графики для полученных данных
+```{r}
+par(mfrow = c(1, 1), pty = "s")
+qqnorm(data_100[1, ])
+qqline(data_100[1, ], col = "red")
+
+par(mfrow = c(1, 1), pty = "s")
+qqnorm(data_1000[1, ])
+qqline(data_1000[1, ], col = "red")
+
+par(mfrow = c(1, 1), pty = "s")
+qqnorm(data_100[2, ])
+qqline(data_100[2, ], col = "red")
+
+par(mfrow = c(1, 1), pty = "s")
+qqnorm(data_1000[2, ])
+qqline(data_1000[2, ], col = "red")
+```
+
+
+# __________________________________________________________________________________
+
+# 6. Продемонстрировать пример анализа данных с помощью графиков
+# квантилей, метода огибающих, а также стандартных процедур проверки гипотез
+# о нормальности. Рассмотреть выборки малого и умеренного объемов.
+
+
+# Загружаем нужные библиотеки
+```{r}
+install.packages('nortest')
+library(nortest)
+library(MASS)
+library(ggplot2)
+library(boot)
+```
+
+# И соответственно нужные данные об индексах массы тела разного объема
+```{r}
+data <- read.csv(file = "BMI.csv", header = TRUE)
+tail(data, n = 5)
+data1 <- read.csv(file = "Final_Dataset.csv", header = TRUE)
+tail(data1, n = 10)
+```
+
+# Рисуем QQ графики
+```{r}
+par(mfrow = c(1, 1), pty = "s")
+qqnorm(data$Height)
+qqline(data$Height, col = "red")
+
+par(mfrow = c(1, 1), pty = "s")
+qqnorm(data1$BMI)
+qqline(data1$BMI, col = "red")
+```
+
+# Проводим анализ данных методом огибающих для 1ых данных о росте
+```{r}
+par(mfrow = c(1,1), pty = "s", bg = "white")
+z <- (data$Height - mean(data$Height))/sqrt(var(data$Height))  #  Стандартизация выборки
+x.qq <- qqnorm(z, plot.it = FALSE)
+x.qq <- lapply(x.qq, sort)
+plot(x.qq, ylim = c(-5, 5), ylab = "Z-статистики выборки", xlab = "Квантили нормального распределения N(0, 1), n = 500", col = 'red')
+
+x.gen <- function(dat, mle) rnorm(length(dat))
+x.qqboot <- boot(z, sort, R = 999, 
+                 sim = "parametric",ran.gen = x.gen)
+sapply(1:999,function(i) lines(x.qq$x, x.qqboot$t[i,],
+                               type = "l", col = "grey"))
+points (x.qq, pch = 20)
+lines(c(-3, 3), c(-3, 3), col = "red", lwd = 2)
+
+x.env <- envelope(x.qqboot, level = 0.9)
+lines(x.qq$x,x.env$point[1, ], lty = 4)
+lines(x.qq$x,x.env$point[2, ], lty = 4)
+lines(x.qq$x,x.env$overall[1, ], lty = 1)
+lines(x.qq$x,x.env$overall[2, ], lty = 1)
+```
+
+# И для 2ых об индексе массы тела
+```{r}
+par(mfrow = c(1,1), pty = "s", bg = "white")
+z <- (data1$BMI[1:5000] - mean(data1$BMI[1:5000]))/sqrt(var(data1$BMI[1:5000]))  #  Стандартизация выборки
+x.qq <- qqnorm(z, plot.it = FALSE)
+x.qq <- lapply(x.qq, sort)
+plot(x.qq, ylim = c(-5, 5), ylab = "Z-статистики выборки", xlab = "Квантили нормального распределения N(0, 1), n = 5000", col = 'red')
+
+x.gen <- function(dat, mle) rnorm(length(dat))
+x.qqboot <- boot(z, sort, R = 999, 
+                 sim = "parametric",ran.gen = x.gen)
+sapply(1:999,function(i) lines(x.qq$x, x.qqboot$t[i,],
+                               type = "l", col = "grey"))
+points (x.qq, pch = 20)
+lines(c(-3, 3), c(-3, 3), col = "red", lwd = 2)
+
+x.env <- envelope(x.qqboot, level = 0.9)
+lines(x.qq$x,x.env$point[1, ], lty = 4)
+lines(x.qq$x,x.env$point[2, ], lty = 4)
+lines(x.qq$x,x.env$overall[1, ], lty = 1)
+lines(x.qq$x,x.env$overall[2, ], lty = 1)
+```
+# И поверяем стандартные гипотезы о нормальности данных
+
+# Критерий Шапиров-Уилка
+```{r}
+shapiro.test(data$Height)
+shapiro.test(data1$BMI[1:5000])
+```
+
+# Критерий Андерсона-Дарлинга
+```{r}
+ad.test(data$Height)
+ad.test(data1$BMI[1:5000])
+```
+# Критерий Крамера фон Мизеса
+```{r}
+cvm.test(data$Height)
+cvm.test(data1$BMI[1:5000])
+```
+
+# Критерий Колмогорова-Смирнова в модификации Лиллиефорса
+```{r}
+lillie.test(data$Height)
+lillie.test(data1$BMI[1:5000])
+```
+# Критерий Шапиро-Франсия
+```{r}
+sf.test(data$Height)
+sf.test(data1$BMI[1:5000])
+```
+
+
+# __________________________________________________________________________________
+
+# 7. Продемонстрировать применение для проверки различных гипотез и
+# различных доверительных уровней (0.9, 0.95, 0.99) следующих критериев:
+#   a. Стьюдента, включая односторонние варианты, когда
+# проверяемая нулевая гипотеза заключается в том, что одно из сравниваемых
+# средних значений больше (или меньше) другого. Реализовать оценку
+# мощности критериев при заданном объеме выборки или определения
+# объема выборки для достижения заданной мощности;
+#   b. Уилкоксона-Манна-Уитни (ранговые);
+#   c. Фишера, Левене, Бартлетта, Флигнера-Килина (проверка
+# гипотез об однородности дисперсий).
+
+# a
+```{r}
+data <- read.csv(file = "test.csv", header = TRUE)
+data1 <- data$ram[data$three_g == 1]
+data1
+```
+
+```{r}
+data2 <- data$ram[data$three_g == 0]
+data2
+```
+
+```{r}
+E <- mean(data1)
+t.test(data1, mu = 2100)
+```
+# Проводим тесты
+```{r}
+attach(data)
+tapply(ram, three_g, mean)
+t.test(ram ~ three_g)
+t.test(ram ~ three_g, var.equal = TRUE)
+t.test(ram ~ three_g, alternative = "less")
+t.test(ram ~ three_g, alternative = "greater")
+t.test(ram ~ three_g, alternative = "two.sided")
+```
+# b
+```{r}
+benz90 <- c(20, 23, 21, 25, 18, 17, 18, 24, 20, 24)
+benz95 <- c(24, 25, 21, 22, 23, 18, 17, 28, 24, 27)
+
+wilcox.test(benz90, benz95)
+```
+
+# c
+```{r}
+group1 <- c(7, 14, 14, 13, 12, 9, 6, 14, 12, 8)
+group2 <- c(15, 17, 13, 15, 15, 13, 9, 12, 10, 8)
+group3 <- c(6, 8, 8, 9, 5, 14, 13, 8, 10, 9)
+```
+```{r}
+install.packages('car')
+library(car)
+```
+# группируем данные
+```{r}
+data <- data.frame(program = rep(c("A", "B", "C"), each = 10 ), plant = c(group1, group2, group3))
+data
+```
+# и сравниваем дисперсси с помощью нужных тестов
+```{r}
+leveneTest(plant ~ program, data = data)
+bartlett.test(plant ~ program, data = data)
+fligner.test(plant ~ program, data = data)
+```
+
+
+# 8. Исследовать корреляционные взаимосвязи в данных с помощью
+# коэффициентов корреляции Пирсона, Спирмена и Кендалла.
+
+
+# Загружаем данные о классификации телефонов
+```{r}
+data <- read.csv(file = "test.csv", header = TRUE)
+```
+
+# 3g and 4g
+```{r}
+cor.test(data$three_g, data$four_g, method = "pearson")
+
+cor.test(data$three_g, data$four_g, method = "spearman")
+
+cor.test(data$three_g, data$four_g, method = "kendall")
+```
+# 3g and ram
+```{r}
+cor.test(data$three_g, data$ram, method = "pearson")
+
+cor.test(data$three_g, data$ram, method = "spearman")
+
+cor.test(data$three_g, data$ram, method = "kendall")
+```
+# battery power and 4g
+```{r}
+cor.test(data$battery_power, data$four_g, method = "pearson")
+
+cor.test(data$battery_power, data$four_g, method = "spearman")
+
+cor.test(data$battery_power, data$four_g, method = "kendall")
+
+```
+
+# __________________________________________________________________________________
+
+# 9. Продемонстрировать использование методов хи-квадрат, точного
+# теста Фишера, теста МакНемара, Кохрана-Мантеля-Хензеля.
+
+# a
+```{r}
+observed <- c(50, 60, 40, 47, 53) 
+expected <- c(.2, .2, .2, .2, .2) 
+chisq.test(x = observed, p = expected)
+```
+# b
+```{r}
+data = matrix(c(2, 7, 8 , 3), nrow = 2)
+data
+fisher.test(data)
+```
+
+# c
+```{r}
+data <- matrix(c(30, 12, 40, 18), nrow = 2)
+data
+mcnemar.test(data)
+```
+# d
+```{r}
+drug <-
+  array(c(11, 10, 25, 27,
+          16, 22, 4, 10,
+          14, 7, 5, 12,
+          2, 1, 14, 16,
+          6, 0, 11, 12,
+          1, 0, 10, 10,
+          1, 1, 4, 8,
+          4, 6, 2, 1),
+        dim = c(2, 2, 8),
+        dimnames = list(
+          Group = c("Drug", "Control"),
+          Response = c("Success", "Failure"),
+          Center = c("1", "2", "3", "4", "5", "6", "7", "8")))
+drug
+mantelhaen.test(drug)
+```
+
+# __________________________________________________________________________________
+
+# 10. Проверить наличие мультиколлинеарности в данных с помощью
+# корреляционной матрицы и фактора инфляции дисперсии.
+
+```{r}
+head(mtcars)
+```
+```{r}
+model <- lm(mpg ~ disp + hp + wt + drat, data = mtcars)
+
+summary(model)
+```{r}
+```{r}
+library(car)
+```
+# VIF
+```{r}
+vif(model)
+vif_values <- vif(model)
+```
+# Визуализируем результат
+```{r}
+barplot(vif_values, main = "VIF Values", horiz = TRUE, col = "steelblue")
+abline(v = 5, lwd = 3, lty = 2)
+```
+# строим матрицу корреляций
+```{r}
+install.packages("corrplot")
+library (corrplot)
+data <- mtcars[ , c("disp", "hp", "wt", "drat")]
+corrplot(cor(data))
+```
+
+# __________________________________________________________________________________
+
+# 11. Исследовать зависимости в данных с помощью дисперсионного
+# анализа.
+
+```{r}
+set.seed(3)
+data <- data.frame(program = rep(c("A", "B", "C"), each = 30),
+ weight_loss = c(runif(30, 0, 3),
+ runif(30, 0, 5),
+ runif(30, 1, 7)))
+data
+```
+```{r}
+boxplot(weight_loss ~ program,
+data = data,
+main = "Weight Loss Distribution by Program",
+xlab = "Program",
+ylab = "Weight Loss",
+col = "steelblue",
+border = "black") 
+```
+```{r}
+model <- aov(weight_loss ~ program, data = data)
+summary(model)
+plot(model) 
+```
+
+
+# __________________________________________________________________________________
+
+# 12. Подогнать регрессионные модели (в том числе, нелинейные) к
+# данным, а также оценить качество подобной аппроксимации.
+
+```{r}
+set.seed(1)
+```
+#Cоздаем датасет
+```{r}
+df <- data.frame(hours = runif (50, 5, 15), score=50)
+df$score = df$score + df$hours^3/150 + df$hours * runif (50, 1, 2)
+head(df)
+```
+# строим график зависимости
+```{r}
+library (ggplot2)
+ggplot(df, aes (x=hours, y=score)) + geom_point() 
+
+```
+# Ищем более подходящую степень полинома для регрессии
+```{r}
+df.shuffled <- df[sample ( nrow(df)),]
+K <- 10 
+degree <- 5
+folds <- cut( seq (1, nrow(df.shuffled)), breaks = K, labels = FALSE )
+mse = matrix(data = NA,nrow = K,ncol = degree)
+for (i in 1:K) {
+	testIndexes <- which (folds == i,arr.ind = TRUE )
+	testData <- df.shuffled[testIndexes, ]
+	trainData <- df.shuffled[-testIndexes, ]
+
+	for (j in 1:degree){
+	fit.train = lm (score ~ poly (hours,j), data = trainData)
+	fit.test = predict (fit.train, newdata = testData)
+	mse[i,j] = mean ((fit.test - testData$score)^2) 
+	}
+}
+colMeans(mse)
+```
+
+# Создаем квадратичную модель
+```{r}
+best = lm (score ~ poly (hours, 2, raw = T ), data = df)
+summary(best)
+```
+# И строим ее соответственно
+```{r}
+ggplot(df, aes (x = hours, y = score)) + 
+	geom_point() +
+	stat_smooth(method = 'lm', formula = y ~ poly (x, 2), size = 1) + 
+	xlab('Hours Studied') +
+	ylab('Score')
+```
+# Аналогично строим линейную регрессию
+```{r}
+set.seed(1)
+df <- data.frame(hours = runif (50, 5, 15), score=50)
+df$score = df$score + df$hours^3/150 + df$hours * runif (50, 1, 2)
+attach(df)
+model <- lm(score ~ hours)
+res <- resid(model)
+ggplot(df, aes (x = hours, y = score)) + 
+	geom_point() +
+	stat_smooth(method = 'lm', formula = y ~ poly (x, 1), size = 1) + 
+	xlab('Hours Studied') +
+	ylab('Score') 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
