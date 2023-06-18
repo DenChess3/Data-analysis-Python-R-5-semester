@@ -1,5 +1,5 @@
 # Data-analysis-Python-R-5-semester
-The final task of the computer practicum on data analysis on Python and R
+The final task of the computer practicum on data analysis on Python and R.
 Task implementation in the Taskspy.ipynb and TaskRMD.Rmd files. The remaining files are datasets with data.
 
 Tasks:
