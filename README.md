@@ -1,6 +1,8 @@
 # Data-analysis-Python-R-5-semester
 The final task of the computer practicum on data analysis on Python and R
+Task implementation in the Taskspy.ipynb and TaskRMD.Rmd files. The remaining files are datasets with data.
 
+Tasks:
   1. Implement the approximation of data distributions using
 nuclear estimates.
   2. Implement data analysis using cdplot, dotchart, boxplot and
